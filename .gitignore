@@ -14,3 +14,5 @@ venv/
 *.sqlite3
 *.xlsx
 *.csv
+!final_artifacts/*.csv
+data/

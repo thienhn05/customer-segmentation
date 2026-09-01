@@ -1,0 +1,4 @@
+Algorithm,Best_Configuration,Number_of_Clusters,Silhouette_Score,Davies_Bouldin_Index,Algorithm_Specific_Metrics,Computational_Complexity,Rank
+K-Means,K = 2,2,0.4328,0.8925,Inertia = 6483.59,O(n * k * d * i) [Fast],1
+Gaussian Mixture Model (GMM),"2 components, spherical covariance",2,0.4307,0.9023,"AIC = 32563.4, BIC = 32620.8",O(n * k * d^3 * i) [EM Probabilistic],2
+Hierarchical Agglomerative Clustering,"2 clusters, ward linkage, euclidean",2,0.404,0.9405,Cophenetic Corr = 0.6096 (Ward),O(n^2 log n) to O(n^3) [Deterministic Tree],3

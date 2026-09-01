@@ -1,0 +1,231 @@
+{
+  "generated_timestamp": "2026-09-01 20:33:47",
+  "dataset": {
+    "dataset_name": "Online Retail Dataset",
+    "dataset_source": "UCI Machine Learning Repository (Daqing Chen, 2015)",
+    "doi": "10.24432/C5BW33",
+    "time_period": "2010-12-01 to 2011-12-09",
+    "initial_transactions": 541909,
+    "missing_customer_rows": 135080,
+    "invalid_transactions_removed": 8945,
+    "duplicates_removed": 5192,
+    "usable_transactions": 392692,
+    "usable_customers": 4338,
+    "clustering_features": [
+      "LogRecency",
+      "LogFrequency",
+      "LogMonetary"
+    ],
+    "untransformed_features": [
+      "Recency",
+      "Frequency",
+      "Monetary",
+      "AvgOrderValue"
+    ],
+    "skewness_raw": {
+      "Recency": 1.2460475158158468,
+      "Frequency": 12.067030826322075,
+      "Monetary": 19.339367981525182,
+      "AvgOrderValue": 41.692422189634314
+    },
+    "skewness_log": {
+      "LogRecency": -0.37916908402159377,
+      "LogFrequency": 1.2086515045964805,
+      "LogMonetary": 0.3965985740977344,
+      "LogAvgOrderValue": 0.24306655799701127
+    },
+    "scaler_type": "StandardScaler (zero mean, unit variance)",
+    "pca_n_components": 2,
+    "pca_explained_variance_ratio": [
+      0.7507863350737912,
+      0.18786648312516213
+    ],
+    "pca_total_explained_variance": 0.9386528181989533
+  },
+  "kmeans": {
+    "best_k": 2,
+    "silhouette_score": 0.4328,
+    "davies_bouldin_index": 0.8925,
+    "inertia": 6483.59,
+    "all_k_evaluated": [
+      {
+        "k": 2,
+        "silhouette": 0.4328,
+        "davies_bouldin": 0.8925,
+        "inertia": 6483.59
+      },
+      {
+        "k": 3,
+        "silhouette": 0.3365,
+        "davies_bouldin": 1.0483,
+        "inertia": 4869.49
+      },
+      {
+        "k": 4,
+        "silhouette": 0.3375,
+        "davies_bouldin": 1.0086,
+        "inertia": 3939.05
+      },
+      {
+        "k": 5,
+        "silhouette": 0.3162,
+        "davies_bouldin": 0.9878,
+        "inertia": 3296.71
+      },
+      {
+        "k": 6,
+        "silhouette": 0.3124,
+        "davies_bouldin": 1.021,
+        "inertia": 2855.76
+      },
+      {
+        "k": 7,
+        "silhouette": 0.3092,
+        "davies_bouldin": 0.9823,
+        "inertia": 2548.82
+      },
+      {
+        "k": 8,
+        "silhouette": 0.3033,
+        "davies_bouldin": 0.9892,
+        "inertia": 2336.34
+      },
+      {
+        "k": 9,
+        "silhouette": 0.2811,
+        "davies_bouldin": 1.0193,
+        "inertia": 2156.01
+      },
+      {
+        "k": 10,
+        "silhouette": 0.2767,
+        "davies_bouldin": 1.0268,
+        "inertia": 2005.75
+      },
+      {
+        "k": 11,
+        "silhouette": 0.2748,
+        "davies_bouldin": 1.028,
+        "inertia": 1872.68
+      },
+      {
+        "k": 12,
+        "silhouette": 0.275,
+        "davies_bouldin": 1.0279,
+        "inertia": 1767.4
+      }
+    ]
+  },
+  "gmm": {
+    "best_n_components": 2,
+    "best_covariance_type": "spherical",
+    "silhouette_score": 0.4307,
+    "davies_bouldin_index": 0.9023,
+    "aic": 32563.45,
+    "bic": 32620.83,
+    "mean_max_probability": 0.935,
+    "ambiguous_customer_count": 178,
+    "ambiguous_percentage": 4.1
+  },
+  "hierarchical": {
+    "best_n_clusters": 2,
+    "best_linkage_method": "ward",
+    "best_distance_metric": "euclidean",
+    "silhouette_score": 0.404,
+    "davies_bouldin_index": 0.9405,
+    "cophenetic_correlations": [
+      {
+        "method": "ward",
+        "metric": "euclidean",
+        "cophenetic_correlation": 0.6096
+      },
+      {
+        "method": "complete",
+        "metric": "euclidean",
+        "cophenetic_correlation": 0.5773
+      },
+      {
+        "method": "complete",
+        "metric": "manhattan",
+        "cophenetic_correlation": 0.5995
+      },
+      {
+        "method": "complete",
+        "metric": "cosine",
+        "cophenetic_correlation": 0.5802
+      },
+      {
+        "method": "average",
+        "metric": "euclidean",
+        "cophenetic_correlation": 0.6757
+      },
+      {
+        "method": "average",
+        "metric": "manhattan",
+        "cophenetic_correlation": 0.7114
+      },
+      {
+        "method": "average",
+        "metric": "cosine",
+        "cophenetic_correlation": 0.7981
+      },
+      {
+        "method": "single",
+        "metric": "euclidean",
+        "cophenetic_correlation": 0.4881
+      },
+      {
+        "method": "single",
+        "metric": "manhattan",
+        "cophenetic_correlation": 0.5333
+      },
+      {
+        "method": "single",
+        "metric": "cosine",
+        "cophenetic_correlation": 0.6976
+      }
+    ]
+  },
+  "overall_winner": {
+    "algorithm": "K-Means",
+    "configuration": "K = 2",
+    "number_of_clusters": 2,
+    "silhouette_score": 0.4328,
+    "davies_bouldin_index": 0.8925,
+    "justification": "K-Means achieved the highest Silhouette Score (0.4328) and lowest Davies-Bouldin Index (0.8925) on the standardized Log-RFM feature space, successfully separating distinct customer activity tiers."
+  },
+  "segment_profiles": [
+    {
+      "ClusterID": 0,
+      "SegmentName": "Low-Engagement / Lapsed Spenders",
+      "CustomerCount": 2672,
+      "Percentage": 61.6,
+      "Recency_Mean": 134.09,
+      "Recency_Median": 96.0,
+      "Frequency_Mean": 1.67,
+      "Frequency_Median": 1.0,
+      "Monetary_Mean": 495.59,
+      "Monetary_Median": 363.08,
+      "AvgOrderValue_Mean": 320.2,
+      "AvgOrderValue_Median": 239.4,
+      "Characteristics": "Long absence / inactive (median 96 days); infrequent orders (median 1 order); low monetary volume (median $363.07)",
+      "RecommendedAction": "Automated win-back email workflows, time-sensitive re-engagement discounts, surveys to identify customer churn drivers, and low-friction catalog recommendations."
+    },
+    {
+      "ClusterID": 1,
+      "SegmentName": "High-Value Active Customers",
+      "CustomerCount": 1666,
+      "Percentage": 38.4,
+      "Recency_Mean": 25.89,
+      "Recency_Median": 16.0,
+      "Frequency_Mean": 8.44,
+      "Frequency_Median": 6.0,
+      "Monetary_Mean": 4539.6,
+      "Monetary_Median": 2061.08,
+      "AvgOrderValue_Mean": 573.93,
+      "AvgOrderValue_Median": 346.26,
+      "Characteristics": "Highly recent purchases (median 16 days); frequent orders (median 6 orders); above-average spend (median $2,061.08)",
+      "RecommendedAction": "VIP loyalty programs, early access to new product releases, dedicated account management, and premium bundle cross-selling to maximize lifetime value."
+    }
+  ]
+}

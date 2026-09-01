@@ -1,23 +1,80 @@
+import os
+import io
+import zipfile
+import urllib.request
 from pathlib import Path
-import pandas as pd
 import numpy as np
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+import pandas as pd
+import requests
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-import warnings
-warnings.filterwarnings('ignore')
+
+# Ensure writable matplotlib config in sandboxed environments
+os.environ.setdefault('MPLCONFIGDIR', '/tmp/mpl')
+
+
+def get_canonical_dataset_path():
+    """Return local path to the canonical Online Retail dataset file."""
+    candidates = [
+        'Online Retail.xlsx',
+        'online_retail.xlsx',
+        'data/Online Retail.xlsx',
+        'data/Online_Retail.xlsx',
+        'online_retail_II.xlsx',
+    ]
+    for c in candidates:
+        if Path(c).exists() and Path(c).stat().st_size > 100000:
+            return c
+    return 'Online Retail.xlsx'
+
+
+def download_dataset(target_path='Online Retail.xlsx'):
+    """
+    Download the canonical Online Retail dataset from verified sources
+    with automatic mirror fallback and local caching.
+    """
+    urls = [
+        'https://raw.githubusercontent.com/dipanjanS/practical-machine-learning-with-python/master/notebooks/Ch08_Customer_Segmentation_and_Effective_Cross_Selling/Online%20Retail.xlsx',
+        'https://raw.githubusercontent.com/nelsoncardenas/Customer-segmentation-on-Online-Retail-Data-Set/master/Online%20Retail.xlsx',
+        'https://archive.ics.uci.edu/static/public/352/online+retail.zip',
+        'https://archive.ics.uci.edu/ml/machine-learning-databases/00352/Online%20Retail.xlsx',
+    ]
+
+    target = Path(target_path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+
+    print(f"Downloading Online Retail dataset to {target_path}...")
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+
+    for url in urls:
+        try:
+            print(f"  Attempting download from: {url}")
+            response = requests.get(url, headers=headers, timeout=45)
+            if response.status_code == 200 and len(response.content) > 100000:
+                if url.endswith('.zip') or url.endswith('.zip?raw=true'):
+                    with zipfile.ZipFile(io.BytesIO(response.content)) as z:
+                        for name in z.namelist():
+                            if name.endswith('.xlsx') or name.endswith('.csv'):
+                                with open(target, 'wb') as f:
+                                    f.write(z.read(name))
+                                print(f"✓ Extracted and saved {name} to {target_path}")
+                                return str(target)
+                else:
+                    with open(target, 'wb') as f:
+                        f.write(response.content)
+                    print(f"✓ Saved dataset directly to {target_path}")
+                    return str(target)
+        except Exception as e:
+            print(f"  ⚠️ Warning: Mirror failed ({e}), trying next source...")
+
+    raise RuntimeError(
+        "Could not download Online Retail dataset from any mirror. "
+        "Please check your internet connection or place 'Online Retail.xlsx' in the workspace."
+    )
 
 
 def normalize_retail_columns(df):
-    """
-    Standardize common Online Retail column names across workbook variants.
-    This keeps the core functions intact while making both local files and
-    online downloads compatible with the existing RFM pipeline.
-    """
+    """Standardize column names across workbook variants."""
     column_map = {
         'Customer ID': 'CustomerID',
         'CustomerID': 'CustomerID',
@@ -26,267 +83,218 @@ def normalize_retail_columns(df):
         'Price': 'UnitPrice',
         'UnitPrice': 'UnitPrice',
         'unit_price': 'UnitPrice',
+        'Stock Code': 'StockCode',
+        'StockCode': 'StockCode',
+        'Invoice Date': 'InvoiceDate',
+        'InvoiceDate': 'InvoiceDate',
     }
     return df.rename(columns={k: v for k, v in column_map.items() if k in df.columns})
 
 
-def find_dataset_file(candidates=None):
-    """Look for a known Online Retail workbook in the current workspace."""
-    candidate_list = candidates or ['online_retail_II.xlsx', 'Online Retail.xlsx', 'OnlineRetail.xlsx', 'online_retail.xlsx']
-    for name in candidate_list:
-        path = Path(name)
-        if path.exists():
-            return str(path)
-    return None
-
-
-def prepare_retail_dataset(file_path='Online Retail.xlsx'):
+def load_raw_dataset(file_path=None):
     """
-    Prepare the Online Retail dataset for customer segmentation using clustering.
+    Load raw Online Retail transaction dataset with robust fallback
+    and fast parquet caching.
     """
-    try:
-        # Try loading as Excel file first (since it might be .xlsx)
-        print("Loading dataset as Excel file...")
-        df = pd.read_excel(file_path)
-        print(f"✓ Dataset loaded successfully! Shape: {df.shape}")
-        df = normalize_retail_columns(df)
-        
-    except Exception as e:
-        print(f"⚠️  Error loading as Excel: {e}")
-        
-        # Try loading as CSV
+    cache_path = Path('data/online_retail_raw.parquet')
+    if cache_path.exists() and file_path is None:
         try:
-            print("Attempting to load as CSV...")
-            df = pd.read_csv(file_path, encoding='latin1')
-            print(f"✓ Dataset loaded successfully! Shape: {df.shape}")
-            
-        except Exception as e2:
-            print(f"⚠️  Error loading as CSV: {e2}")
-            
-            # If both fail, let's download the dataset
-            print("Downloading dataset from UCI repository...")
-            import requests
-            import io
-            
-            url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00352/Online%20Retail.xlsx"
-            response = requests.get(url)
-            
-            if response.status_code == 200:
-                # Save the downloaded file
-                with open(file_path, 'wb') as f:
-                    f.write(response.content)
-                print(f"✓ Dataset downloaded and saved to {file_path}")
-                
-                # Try loading again
-                df = pd.read_excel(file_path)
-                print(f"✓ Dataset loaded successfully! Shape: {df.shape}")
-            else:
-                raise Exception("Could not download dataset from UCI repository")
-    
-    # Clean the dataset
-    print("\n2. Cleaning dataset...")
-    
-    # Remove rows with missing CustomerID
-    df_clean = df.dropna(subset=['CustomerID'])
-    print(f"✓ Removed rows without CustomerID. New shape: {df_clean.shape}")
-    
-    # Remove negative quantities and zero unit prices
-    df_clean = df_clean[df_clean['Quantity'] > 0]
-    df_clean = df_clean[df_clean['UnitPrice'] > 0]
-    print(f"✓ Removed negative/zero quantities and prices. New shape: {df_clean.shape}")
-    
-    # Convert CustomerID to int
+            df = pd.read_parquet(cache_path)
+            return normalize_retail_columns(df)
+        except Exception:
+            pass
+
+    if file_path is None or not Path(file_path).exists():
+        file_path = get_canonical_dataset_path()
+        if not Path(file_path).exists():
+            file_path = download_dataset(file_path)
+
+    path = Path(file_path)
+    if not path.exists():
+        file_path = download_dataset(str(path))
+        path = Path(file_path)
+
+    print(f"Loading raw dataset from {file_path}...")
+    if path.suffix.lower() in ['.xlsx', '.xls']:
+        df = pd.read_excel(file_path)
+    elif path.suffix.lower() == '.parquet':
+        df = pd.read_parquet(file_path)
+    else:
+        df = pd.read_csv(file_path, encoding='latin1')
+
+    df = normalize_retail_columns(df)
+
+    # Save to fast cache if not existing
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        df.to_parquet(cache_path, index=False)
+    except Exception:
+        pass
+
+    return df
+
+
+def clean_retail_transactions(df):
+    """
+    Clean transaction dataset:
+    - Remove rows with missing CustomerID
+    - Remove cancellations and invalid quantities (Quantity <= 0)
+    - Remove zero or negative unit prices (UnitPrice <= 0)
+    - Parse datetime and calculate TotalPrice
+    """
+    initial_count = len(df)
+
+    # Missing CustomerID removal
+    df_clean = df.dropna(subset=['CustomerID']).copy()
+    missing_customer_count = initial_count - len(df_clean)
+
+    # Convert CustomerID to integer
     df_clean['CustomerID'] = df_clean['CustomerID'].astype(int)
-    
-    # Create TotalPrice column
-    df_clean['TotalPrice'] = df_clean['Quantity'] * df_clean['UnitPrice']
-    
+
+    # Filter invalid quantities and unit prices
+    valid_mask = (df_clean['Quantity'] > 0) & (df_clean['UnitPrice'] > 0)
+    invalid_trx_count = len(df_clean) - valid_mask.sum()
+    df_clean = df_clean[valid_mask].copy()
+
     # Convert InvoiceDate to datetime
     df_clean['InvoiceDate'] = pd.to_datetime(df_clean['InvoiceDate'])
-    
-    # Calculate Recency, Frequency, and Monetary (RFM) metrics
-    print("\n3. Calculating RFM metrics...")
-    
-    current_date = df_clean['InvoiceDate'].max()
-    
-    # Recency: days since last purchase
-    recency_df = df_clean.groupby('CustomerID')['InvoiceDate'].max().reset_index()
-    recency_df['Recency'] = (current_date - recency_df['InvoiceDate']).dt.days
-    
-    # Frequency: number of transactions
-    frequency_df = df_clean.groupby('CustomerID')['InvoiceNo'].nunique().reset_index()
-    frequency_df.columns = ['CustomerID', 'Frequency']
-    
-    # Monetary: total amount spent
-    monetary_df = df_clean.groupby('CustomerID')['TotalPrice'].sum().reset_index()
-    monetary_df.columns = ['CustomerID', 'Monetary']
-    
-    # Merge all RFM metrics
-    customer_features = recency_df.merge(frequency_df, on='CustomerID')
-    customer_features = customer_features.merge(monetary_df, on='CustomerID')
-    
-    print(f"✓ RFM metrics calculated for {len(customer_features)} customers")
-    print(f"Features: Recency, Frequency, Monetary")
-    
-    # Additional features: average order value
-    customer_features['AvgOrderValue'] = customer_features['Monetary'] / customer_features['Frequency']
-    
-    # Log transform monetary and frequency for better distribution
-    customer_features['LogMonetary'] = np.log1p(customer_features['Monetary'])
+
+    # Calculate TotalPrice
+    df_clean['TotalPrice'] = df_clean['Quantity'] * df_clean['UnitPrice']
+
+    # Remove exact duplicate transaction lines if any
+    duplicate_count = df_clean.duplicated().sum()
+    if duplicate_count > 0:
+        df_clean = df_clean.drop_duplicates().copy()
+
+    cleaning_stats = {
+        'initial_transactions': initial_count,
+        'missing_customer_rows': missing_customer_count,
+        'invalid_transactions_removed': invalid_trx_count,
+        'duplicates_removed': int(duplicate_count),
+        'usable_transactions': len(df_clean),
+        'min_date': str(df_clean['InvoiceDate'].min()),
+        'max_date': str(df_clean['InvoiceDate'].max()),
+    }
+
+    return df_clean, cleaning_stats
+
+
+def calculate_rfm_metrics(df_clean, reference_date=None):
+    """
+    Aggregate transaction data by CustomerID into RFM behavioral features:
+    - Recency: Days since last transaction (relative to snapshot date)
+    - Frequency: Number of unique purchase invoices
+    - Monetary: Total spending amount
+    - AvgOrderValue: Monetary / Frequency
+    """
+    if reference_date is None:
+        reference_date = df_clean['InvoiceDate'].max() + pd.Timedelta(days=1)
+    else:
+        reference_date = pd.to_datetime(reference_date)
+
+    rfm = df_clean.groupby('CustomerID').agg({
+        'InvoiceDate': lambda d: (reference_date - d.max()).days,
+        'InvoiceNo': 'nunique',
+        'TotalPrice': 'sum',
+    }).reset_index()
+
+    rfm.columns = ['CustomerID', 'Recency', 'Frequency', 'Monetary']
+    rfm['AvgOrderValue'] = (rfm['Monetary'] / rfm['Frequency']).round(2)
+
+    return rfm
+
+
+def engineer_clustering_features(rfm_df):
+    """
+    Inspect skewness and apply log1p transformations to create
+    a statistically sound clustering matrix without multicollinear duplication.
+    """
+    customer_features = rfm_df.copy()
+
+    # Log1p transforms for skewed positive metrics
+    customer_features['LogRecency'] = np.log1p(customer_features['Recency'])
     customer_features['LogFrequency'] = np.log1p(customer_features['Frequency'])
-    
-    print("\n4. Feature Engineering complete. Final features:")
-    print(customer_features.head())
-    
-    # Prepare features for clustering
-    print("\n5. Preparing features for clustering...")
-    
-    # Select features for clustering
-    X = customer_features[['Recency', 'Frequency', 'Monetary', 'AvgOrderValue']].copy()
-    
-    # Add log-transformed features
-    X['LogMonetary'] = customer_features['LogMonetary']
-    X['LogFrequency'] = customer_features['LogFrequency']
-    
-    print(f"✓ Features ready: {X.shape}")
-    print(f"Features: {X.columns.tolist()}")
-    
-    # Scale the features
-    print("\n6. Scaling features...")
+    customer_features['LogMonetary'] = np.log1p(customer_features['Monetary'])
+    customer_features['LogAvgOrderValue'] = np.log1p(customer_features['AvgOrderValue'])
+
+    # Skewness calculation
+    skewness_raw = {
+        'Recency': float(customer_features['Recency'].skew()),
+        'Frequency': float(customer_features['Frequency'].skew()),
+        'Monetary': float(customer_features['Monetary'].skew()),
+        'AvgOrderValue': float(customer_features['AvgOrderValue'].skew()),
+    }
+    skewness_log = {
+        'LogRecency': float(customer_features['LogRecency'].skew()),
+        'LogFrequency': float(customer_features['LogFrequency'].skew()),
+        'LogMonetary': float(customer_features['LogMonetary'].skew()),
+        'LogAvgOrderValue': float(customer_features['LogAvgOrderValue'].skew()),
+    }
+
+    # Final feature set for clustering: Log-transformed RFM
+    # Avoids collinear duplication of Monetary/Frequency and AvgOrderValue
+    clustering_cols = ['LogRecency', 'LogFrequency', 'LogMonetary']
+    X = customer_features[clustering_cols].copy()
+
+    return customer_features, X, skewness_raw, skewness_log
+
+
+def prepare_retail_dataset(file_path=None):
+    """
+    Main canonical pipeline function.
+    Returns:
+    - customer_features: DataFrame with CustomerID, RFM, AvgOrderValue, and Log features
+    - X: DataFrame with the exact clustering features (LogRecency, LogFrequency, LogMonetary)
+    - X_scaled: StandardScaler transformed numpy matrix
+    - X_pca: 2D PCA transformed numpy matrix for visualization
+    - metadata: Comprehensive dictionary of preprocessing metrics and dataset details
+    """
+    df_raw = load_raw_dataset(file_path)
+    df_clean, cleaning_stats = clean_retail_transactions(df_raw)
+    rfm_df = calculate_rfm_metrics(df_clean)
+    customer_features, X, skew_raw, skew_log = engineer_clustering_features(rfm_df)
+
+    # Standard scaling
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    print(f"✓ Features scaled using StandardScaler")
-    
-    # Apply PCA for dimensionality reduction
-    print("\n7. Applying PCA...")
+
+    # PCA for 2D visualization
     pca = PCA(n_components=2, random_state=42)
     X_pca = pca.fit_transform(X_scaled)
-    print(f"✓ PCA applied. Explained variance ratio: {pca.explained_variance_ratio_.sum():.2%}")
-    
-    print("\n" + "="*50)
-    print("✅ Dataset preparation complete!")
-    print("="*50)
-    
-    return customer_features, X, X_scaled, X_pca
+    pca_variance_ratio = pca.explained_variance_ratio_.tolist()
+    pca_total_variance = float(pca.explained_variance_ratio_.sum())
 
-def find_optimal_clusters(X_scaled, max_k=10):
-    """
-    Find the optimal number of clusters using Elbow method and Silhouette score.
-    """
-    print("\n🔍 Finding optimal number of clusters...")
-    
-    inertias = []
-    silhouette_scores = []
-    K_range = range(2, max_k + 1)
-    
-    from sklearn.metrics import silhouette_score
-    
-    for k in K_range:
-        kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
-        kmeans.fit(X_scaled)
-        inertias.append(kmeans.inertia_)
-        
-        # Silhouette score for k>1
-        if k >= 2:
-            score = silhouette_score(X_scaled, kmeans.labels_)
-            silhouette_scores.append(score)
-        else:
-            silhouette_scores.append(0)
-    
-    # Plot results
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
-    
-    # Elbow plot
-    ax1.plot(K_range, inertias, 'bo-')
-    ax1.set_xlabel('Number of Clusters (k)')
-    ax1.set_ylabel('Inertia')
-    ax1.set_title('Elbow Method for Optimal k')
-    ax1.grid(True, alpha=0.3)
-    
-    # Silhouette plot
-    ax2.plot(K_range, silhouette_scores, 'ro-')
-    ax2.set_xlabel('Number of Clusters (k)')
-    ax2.set_ylabel('Silhouette Score')
-    ax2.set_title('Silhouette Score for Optimal k')
-    ax2.grid(True, alpha=0.3)
-    
-    plt.tight_layout()
-    plt.show()
-    
-    # Recommend k
-    best_k_silhouette = K_range[np.argmax(silhouette_scores)]
-    print(f"\n📊 Recommended k based on Silhouette Score: {best_k_silhouette}")
-    print(f"   (Highest Silhouette Score: {max(silhouette_scores):.3f})")
-    
-    return best_k_silhouette
+    metadata = {
+        'dataset_name': 'Online Retail Dataset',
+        'dataset_source': 'UCI Machine Learning Repository (Daqing Chen, 2015)',
+        'doi': '10.24432/C5BW33',
+        'time_period': f"{cleaning_stats['min_date'][:10]} to {cleaning_stats['max_date'][:10]}",
+        'initial_transactions': cleaning_stats['initial_transactions'],
+        'missing_customer_rows': cleaning_stats['missing_customer_rows'],
+        'invalid_transactions_removed': cleaning_stats['invalid_transactions_removed'],
+        'duplicates_removed': cleaning_stats['duplicates_removed'],
+        'usable_transactions': cleaning_stats['usable_transactions'],
+        'usable_customers': len(customer_features),
+        'clustering_features': list(X.columns),
+        'untransformed_features': ['Recency', 'Frequency', 'Monetary', 'AvgOrderValue'],
+        'skewness_raw': skew_raw,
+        'skewness_log': skew_log,
+        'scaler_type': 'StandardScaler (zero mean, unit variance)',
+        'pca_n_components': 2,
+        'pca_explained_variance_ratio': pca_variance_ratio,
+        'pca_total_explained_variance': pca_total_variance,
+    }
 
-# Run the preparation
-if __name__ == "__main__":
-    print("="*50)
-    print("Preparing Online Retail Dataset for Clustering")
-    print("="*50)
-    
-    # Try to load with automatic fallback
-    try:
-        # Try alternative file names, including the local workbook used in this workspace
-        file_names = ['online_retail_II.xlsx', 'Online Retail.xlsx', 'OnlineRetail.xlsx', 'online_retail.xlsx']
-        customer_features, X, X_scaled, X_pca = None, None, None, None
-        
-        for file in file_names:
-            try:
-                customer_features, X, X_scaled, X_pca = prepare_retail_dataset(file)
-                break
-            except Exception as e:
-                print(f"Could not load {file}: {e}")
-                continue
+    return customer_features, X, X_scaled, X_pca, metadata
 
-        if customer_features is None:
-            discovered_file = find_dataset_file(file_names)
-            if discovered_file:
-                customer_features, X, X_scaled, X_pca = prepare_retail_dataset(discovered_file)
-        
-        if customer_features is None:
-            # Download the dataset
-            print("Downloading dataset...")
-            import requests
-            url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00352/Online%20Retail.xlsx"
-            response = requests.get(url)
-            with open('Online Retail.xlsx', 'wb') as f:
-                f.write(response.content)
-            
-            customer_features, X, X_scaled, X_pca = prepare_retail_dataset('Online Retail.xlsx')
-        
-        # Check the data
-        print(f"\n📊 Customer Features Summary:")
-        print(customer_features.describe())
-        
-        # Find optimal clusters
-        optimal_k = find_optimal_clusters(X_scaled)
-        
-        # Apply K-means with optimal k
-        print(f"\n🎯 Applying K-means with k={optimal_k}...")
-        kmeans = KMeans(n_clusters=optimal_k, random_state=42, n_init=10)
-        labels = kmeans.fit_predict(X_scaled)
-        customer_features['Cluster'] = labels
-        
-        print(f"✅ Clustering complete! Added 'Cluster' column to customer_features")
-        print(f"\n📊 Cluster Distribution:")
-        print(customer_features['Cluster'].value_counts().sort_index())
-        
-        # Show cluster centers
-        centers_scaled = kmeans.cluster_centers_
-        scaler = StandardScaler()
-        scaler.fit(X)
-        centers_original = scaler.inverse_transform(centers_scaled)
-        
-        print(f"\n📊 Cluster Centers (Original Scale):")
-        cluster_centers_df = pd.DataFrame(centers_original, columns=X.columns)
-        print(cluster_centers_df)
-        
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
-        print("\nTroubleshooting tips:")
-        print("1. Make sure you have internet connection to download the dataset")
-        print("2. Install required packages: pip install pandas openpyxl requests scikit-learn matplotlib seaborn")
-        print("3. If using a local file, ensure it's in the correct directory")
-        print("4. The file should be 'Online Retail.xlsx' from UCI Machine Learning Repository")
+
+if __name__ == '__main__':
+    print("=" * 60)
+    print("Testing Canonical Preprocessing Pipeline")
+    print("=" * 60)
+    customer_features, X, X_scaled, X_pca, metadata = prepare_retail_dataset()
+    print(f"✓ Usable customers: {len(customer_features):,}")
+    print(f"✓ Clustering features: {list(X.columns)}")
+    print(f"✓ PCA Total Explained Variance: {metadata['pca_total_explained_variance']:.2%}")
+    print(f"✓ Sample customer features:\n{customer_features.head(3)}")
