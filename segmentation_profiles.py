@@ -127,9 +127,9 @@ def create_final_segment_profiles(customer_features, labels):
             char_parts.append(f"infrequent orders (median {row['Frequency_median']:.0f} order)")
 
         if row['Monetary_median'] >= pop_medians['Monetary']:
-            char_parts.append(f"above-average spend (median ${row['Monetary_median']:,.2f})")
+            char_parts.append(f"above-average spend (median £{row['Monetary_median']:,.2f})")
         else:
-            char_parts.append(f"low monetary volume (median ${row['Monetary_median']:,.2f})")
+            char_parts.append(f"low monetary volume (median £{row['Monetary_median']:,.2f})")
 
         characteristics = "; ".join(char_parts)
 

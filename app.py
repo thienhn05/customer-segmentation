@@ -224,7 +224,7 @@ def main():
                         <p><strong>Customers:</strong> {prof['CustomerCount']:,} ({prof['Percentage']}%)</p>
                         <p><strong>Median Recency:</strong> {prof['Recency_Median']:.0f} days</p>
                         <p><strong>Median Orders:</strong> {prof['Frequency_Median']:.0f} invoices</p>
-                        <p><strong>Median Spend:</strong> ${prof['Monetary_Median']:,.2f}</p>
+                        <p><strong>Median Spend:</strong> £{prof['Monetary_Median']:,.2f}</p>
                         <hr style='margin: 8px 0;'>
                         <p style='font-size: 0.9rem; color: #374151;'><em>{prof['RecommendedAction']}</em></p>
                     </div>
@@ -286,7 +286,7 @@ def main():
             col_a, col_b = st.columns(2)
             with col_a:
                 fig = px.histogram(customer_features, x='Monetary', nbins=35, title=f"Raw Monetary (Skewness: {skew_raw['Monetary']:.2f})", color_discrete_sequence=['#2563EB'])
-                fig.update_layout(xaxis_title="Monetary Spend ($)", yaxis_title="Customer Count")
+                fig.update_layout(xaxis_title="Monetary Spend (£ / GBP)", yaxis_title="Customer Count")
                 st.plotly_chart(fig, use_container_width=True)
             with col_b:
                 fig = px.histogram(customer_features, x='LogMonetary', nbins=35, title=f"Log-Transformed Monetary (Skewness: {skew_log['LogMonetary']:.2f})", color_discrete_sequence=['#10B981'])
@@ -596,8 +596,8 @@ def main():
                     <p><strong>Customer Base:</strong> {int(row['CustomerCount']):,} ({row['Percentage']}%)</p>
                     <p><strong>Median Recency:</strong> {row['Recency_Median']:.0f} days (Mean: {row['Recency_Mean']:.1f})</p>
                     <p><strong>Median Frequency:</strong> {row['Frequency_Median']:.0f} orders (Mean: {row['Frequency_Mean']:.1f})</p>
-                    <p><strong>Median Monetary:</strong> ${row['Monetary_Median']:,.2f} (Mean: ${row['Monetary_Mean']:,.2f})</p>
-                    <p><strong>Median Order Value:</strong> ${row['AvgOrderValue_Median']:,.2f}</p>
+                    <p><strong>Median Monetary:</strong> £{row['Monetary_Median']:,.2f} (Mean: £{row['Monetary_Mean']:,.2f})</p>
+                    <p><strong>Median Order Value:</strong> £{row['AvgOrderValue_Median']:,.2f}</p>
                     <hr style='margin: 8px 0;'>
                     <p><strong>Characteristics:</strong> {row['Characteristics']}</p>
                     <p style='color: #1E40AF;'><strong>Marketing Strategy:</strong> {row['RecommendedAction']}</p>

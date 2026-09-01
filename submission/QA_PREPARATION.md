@@ -8,7 +8,7 @@ This document contains 30 comprehensive, technically rigorous questions and mode
 
 ### Q1: Why did you drop records with missing `CustomerID` instead of imputing them?
 **Answer:**
-> *"In customer segmentation, `CustomerID` is the fundamental entity key around which longitudinal transactional behaviors are aggregated. A missing `CustomerID` (which accounted for 135,080 rows or ~24.9% of the dataset) represents unregistered guest checkouts. Imputing a synthetic customer ID or aggregating them into a single dummy ID would introduce catastrophic bias, artificially fabricating a 'mega-customer' with over 130,000 orders and distorting the entire RFM distribution. Removing unauthenticated records is standard scientific practice in customer analytics literature (Chen et al., 2012)."*
+> *"In customer segmentation, `CustomerID` is the fundamental entity key around which longitudinal transactional behaviors are aggregated. A missing `CustomerID` (which accounted for 135,080 rows or ~24.9% of the dataset) represents unregistered guest checkouts. Imputing a synthetic customer ID or aggregating them into a single dummy ID would introduce catastrophic bias, artificially fabricating a 'mega-customer' with over 130,000 orders and distorting the entire RFM distribution. Removing unauthenticated records is standard scientific practice in customer analytics literature (Chen, Sain & Guo, 2012)."*
 
 ### Q2: How did you handle negative quantities and zero unit prices?
 **Answer:**
@@ -16,7 +16,7 @@ This document contains 30 comprehensive, technically rigorous questions and mode
 
 ### Q3: Why did you apply `log1p` transformation to RFM features?
 **Answer:**
-> *"E-commerce retail metrics exhibit extreme positive (right) skewness due to the Pareto principle, where a small fraction of power buyers generate the majority of spend. For instance, raw Monetary spend had a skewness coefficient of **+19.34**, and Frequency had **+12.07**. Unsupervised algorithms relying on Euclidean distances (like K-Means and Ward linkage) are severely distorted by extreme outliers, which pull centroids away from dense data regions. Applying `log1p(x) = \ln(1 + x)` reduced Monetary skewness to **+0.40** and Frequency skewness to **+1.21**, restoring near-normal symmetry while preserving monotonicity and non-negativity."*
+> *"E-commerce retail metrics exhibit extreme positive (right) skewness due to the Pareto distribution, where a small fraction of power buyers generate the majority of spend. For instance, raw Monetary spend had a skewness coefficient of **+19.34**, and Frequency had **+12.07**. Unsupervised algorithms relying on Euclidean distances (like K-Means and Ward linkage) are sensitive to extreme outliers, which pull centroids away from dense data regions. Applying `log1p(x) = \ln(1 + x)` reduced Monetary skewness to **+0.40** and Frequency skewness to **+1.21**, restoring near-normal symmetry while preserving monotonicity and non-negativity."*
 
 ### Q4: Why did you not include both raw features and log features in clustering?
 **Answer:**
@@ -45,14 +45,14 @@ This document contains 30 comprehensive, technically rigorous questions and mode
 
 ### Q8: Why did K-Means select $K=2$ as the optimal number of clusters?
 **Answer:**
-> *"We conducted a systematic grid search over $K = 2 \dots 12$. The Silhouette Score peaked at $K=2$ with **0.4328** and the Davies-Bouldin Index reached its minimum at **0.8925**. At $K=2$, the data exhibits a natural, distinct bifurcation between highly active, high-spend frequent shoppers and dormant, low-spend occasional buyers. While $K=4$ offers granular sub-tiers (Silhouette 0.3375), $K=2$ represents the mathematical global optimum in terms of geometric cluster compactness and separation."*
+> *"We conducted a systematic grid search over $K = 2 \dots 12$. The Silhouette Score peaked at $K=2$ with **0.4328** and the Davies-Bouldin Index reached its minimum at **0.8925**. At $K=2$, the data exhibits a clear separation between highly active, frequent shoppers and dormant, low-spend occasional buyers. While $K=4$ offers granular sub-tiers (Silhouette 0.3375), $K=2$ represents the mathematical global optimum in terms of geometric cluster compactness and separation."*
 
 ### Q9: How does Gaussian Mixture Model (GMM) differ from K-Means?
 **Answer:**
 > *"While K-Means performs hard, deterministic spherical partitioning, GMM is a generative probabilistic model that assumes the dataset is generated from a mixture of $K$ multivariate Gaussian distributions:
 > $$p(x) = \sum_{k=1}^{K} \pi_k \mathcal{N}(x \mid \mu_k, \Sigma_k)$$
 > Key differences:
-> 1. **Soft Clustering**: GMM provides posterior probabilities $P(C_k \mid x_i)$ for each cluster, quantifying uncertainty.
+> 1. **Soft Clustering**: GMM provides posterior probabilities $P(C_k \mid x_i)$ for each cluster, quantifying assignment uncertainty.
 > 2. **Flexible Geometry**: Through the covariance matrix $\Sigma_k$ (`full`, `tied`, `diag`, `spherical`), GMM can model ellipsoidal clusters with varying orientations, unlike K-Means which enforces spherical clusters."*
 
 ### Q10: How does the Expectation-Maximization (EM) algorithm work in GMM?
@@ -71,11 +71,11 @@ This document contains 30 comprehensive, technically rigorous questions and mode
 > 3. `diag`: Each component has a diagonal covariance matrix (axes-aligned).
 > 4. `spherical`: Each component has a single variance parameter ($\sigma_k^2 I$).
 > 
-> The **spherical covariance** with 2 components achieved the highest Silhouette Score (**0.4307**), indicating that after our log-transformation and standardization, the feature space is isotropic, making complex full covariance structures prone to slight overfitting."*
+> The **spherical covariance** with 2 components achieved the highest GMM Silhouette Score (**0.4307**), indicating that after our log-transformation and standardization, the feature space is isotropic, making complex full covariance structures prone to slight parameter overfitting."*
 
 ### Q12: How did you diagnose uncertainty in GMM clustering?
 **Answer:**
-> *"We analyzed the distribution of maximum assignment probabilities $\max_k P(C_k \mid x_i)$. The mean assignment confidence across all 4,338 customers was **93.50%**. By defining an ambiguity threshold of $P_{\max} < 0.60$, we identified that only **178 customers (4.10%)** occupy the boundary region between clusters. These ambiguous customers represent transitioning buyers who can be targeted with targeted A/B test campaigns."*
+> *"We analyzed the distribution of maximum assignment probabilities $\max_k P(C_k \mid x_i)$. The mean assignment confidence across all 4,338 customers was **93.50%**. By defining an ambiguity threshold of $P_{\max} < 0.60$, we identified that only **178 customers (4.10%)** occupy the boundary region between clusters. These ambiguous customers represent transitioning buyers who can be targeted with targeted marketing tests."*
 
 ### Q13: How does Hierarchical Agglomerative Clustering work?
 **Answer:**
@@ -88,14 +88,14 @@ This document contains 30 comprehensive, technically rigorous questions and mode
 
 ### Q14: Why is Ward linkage preferred over Single and Average linkage in retail segmentation?
 **Answer:**
-> *"Single linkage suffers from the well-known **chaining phenomenon**, where intermediate points connect distant clusters into a single giant chain, isolating outliers into 1-element clusters (e.g., 4,337 vs 1). Average linkage also produced degenerate splits (4,334 vs 4).
-> In contrast, **Ward linkage** minimizes the increase in within-cluster sum of squares upon merging, directly encouraging cohesive, balanced, spherical clusters. Ward linkage produced balanced clusters of 2,672 and 1,666 customers with a Silhouette Score of **0.4040** and a Cophenetic Correlation of **0.6096**."*
+> *"Single linkage suffers from the **chaining phenomenon**, where intermediate points connect distant clusters into a single giant chain, isolating outliers into 1-element clusters (e.g., 4,337 vs 1). Average linkage also produced degenerate splits (4,334 vs 4).
+> In contrast, **Ward linkage** minimizes the increase in within-cluster sum of squares upon merging, directly encouraging cohesive, balanced clusters. Ward linkage produced balanced clusters of 2,672 and 1,666 customers with a Silhouette Score of **0.4040** and a Cophenetic Correlation of **0.6096**."*
 
 ### Q15: What is the Cophenetic Correlation Coefficient?
 **Answer:**
 > *"The Cophenetic Correlation Coefficient ($c$) measures how faithfully the hierarchical dendrogram preserves the original pairwise distances between data points in the input space:
 > $$c = \frac{\sum_{i < j} (d_{ij} - \bar{d})(t_{ij} - \bar{t})}{\sqrt{\sum_{i < j} (d_{ij} - \bar{d})^2 \sum_{i < j} (t_{ij} - \bar{t})^2}}$$
-> where $d_{ij}$ is the Euclidean distance between points $i$ and $j$, and $t_{ij}$ is the dendrogram height at which they are first merged. A value closer to $+1$ indicates higher structural fidelity. Ward linkage achieved $c = 0.6096$."*
+> where $d_{ij}$ is the Euclidean distance between points $i$ and $j$, and $t_{ij}$ is the dendrogram height at which they are first merged. Ward linkage achieved $c = 0.6096$, providing moderate supporting diagnostic evidence of structural consistency."*
 
 ---
 
@@ -119,14 +119,14 @@ This document contains 30 comprehensive, technically rigorous questions and mode
 > *"Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) are penalized likelihood criteria used for model selection:
 > $$\text{AIC} = 2p - 2\ln L, \quad \text{BIC} = p\ln N - 2\ln L$$
 > where $p$ is number of free parameters, $N$ is sample size, and $L$ is maximized likelihood.
-> They prevent overfitting by penalizing model complexity. Lower values indicate a better balance between goodness-of-fit and parsimony."*
+> They evaluate model fit while penalizing parameter complexity. In GMM, they serve as model-fit diagnostics alongside internal cluster validation metrics."*
 
 ### Q19: Why was K-Means selected as the overall winner over GMM and Hierarchical?
 **Answer:**
 > *"K-Means was selected because:
-> 1. **Empirical Superiority**: Highest Silhouette Score (**0.4328**) and lowest Davies-Bouldin Index (**0.8925**).
-> 2. **Computational Efficiency**: Runs in $O(n \cdot k \cdot d \cdot i)$ time (sub-second execution on 4,338 rows), whereas Hierarchical scales as $O(n^2)$ to $O(n^3)$ in memory and time.
-> 3. **Production Feasibility**: Readily generalizes to new incoming streaming transactions via nearest-centroid lookup without retraining the entire tree."*
+> 1. **Empirical Performance**: Highest Silhouette Score (**0.4328**) and lowest Davies-Bouldin Index (**0.8925**).
+> 2. **Computational Efficiency**: Runs in $O(n \cdot k \cdot d \cdot i)$ time (fast execution on 4,338 rows), whereas Hierarchical requires $O(n^2)$ memory for pairwise distances.
+> 3. **Deployment Feasibility**: Readily assigns new incoming streaming transactions via nearest-centroid lookup without retraining."*
 
 ---
 
@@ -134,79 +134,60 @@ This document contains 30 comprehensive, technically rigorous questions and mode
 
 ### Q20: Why did you use PCA for visualization rather than t-SNE or UMAP?
 **Answer:**
-> *"PCA is a linear orthogonal transformation that preserves global geometric variance and distances. Because our clustering features were 3 standardized log dimensions, fitting 2 PCA components captured **93.87%** of the total variance (PC1: 75.08%, PC2: 18.79%).
-> In contrast, t-SNE and UMAP are non-linear stochastic embeddings that distort global distances and cluster densities, which can create misleading visual artifacts. PCA provided an exact, geometrically faithful 2D projection."*
-
-### Q21: What do Principal Components 1 and 2 represent in business terms?
-**Answer:**
-> *"By analyzing eigenvector factor loadings:
-> - **PC1 (75.08% variance)** has strong positive loadings on `LogFrequency` and `LogMonetary`, representing customer **engagement volume and monetary spending power**.
-> - **PC2 (18.79% variance)** has dominant positive loading on `LogRecency`, representing **customer dormancy and recency latency** (days since last purchase)."*
+> *"PCA is a linear orthogonal transformation that preserves global geometric variance. Fitting 2 PCA components captured **93.87%** of the total variance (PC1: 75.08%, PC2: 18.79%).
+> In contrast, t-SNE and UMAP are non-linear stochastic embeddings that do not preserve global distances and can create misleading visual density artifacts. PCA provided an exact, geometrically faithful 2D projection."*
 
 ---
 
 ## Category 5: Business Impact & Strategic Recommendations
 
-### Q22: Describe the two final customer segments and their business profiles.
+### Q21: Describe the two final customer segments and their business profiles.
 **Answer:**
 > *"Our winning model identified two distinct customer segments:
-> 1. **High-Value Active Customers (Cluster 1 / 38.4% / 1,666 customers)**: Highly recent (median 16 days vs pop median 51), frequent buyers (median 6 orders), high spend (median $2,061.08 vs pop median $674.49, mean $4,539.60).
-> 2. **Low-Engagement / Lapsed Spenders (Cluster 0 / 61.6% / 2,672 customers)**: Infrequent (median 1 order), high latency (median 96 days since last purchase), low spend (median $363.08, mean $495.59)."*
+> 1. **High-Value Active Customers (Cluster 1 / 38.4% / 1,666 customers)**: Highly recent (median 16 days vs pop median 51), frequent buyers (median 6 orders), high spend (median **£2,061.08** vs pop median £674.49, mean £4,539.60).
+> 2. **Low-Engagement / Lapsed Spenders (Cluster 0 / 61.6% / 2,672 customers)**: Infrequent (median 1 order), high latency (median 96 days since last purchase), low spend (median **£363.08**, mean £495.59)."*
 
-### Q23: What actionable strategies do you propose for High-Value Active Customers?
+### Q22: What actionable strategies do you propose for High-Value Active Customers?
 **Answer:**
 > *"For High-Value Active Customers (Cluster 1):
 > - **VIP Loyalty Program**: Tiered rewards and exclusive cashback points.
-> - **Early Access**: Beta testing and pre-launch previews for new giftware lines.
-> - **Dedicated Account Management**: High-touch customer support to prevent churn.
-> - **Upsell / Cross-Sell Bundles**: Personalized recommendations based on previous order history to maximize Customer Lifetime Value (CLV)."*
+> - **Early Access**: Pre-launch previews for new giftware lines.
+> - **Dedicated Support**: Priority customer service to maintain engagement.
+> - **Upsell / Cross-Sell Bundles**: Recommendations based on item affinity (`StockCode`) to increase basket size."*
 
-### Q24: What actionable strategies do you propose for Low-Engagement / Lapsed Spenders?
+### Q23: What actionable strategies do you propose for Low-Engagement / Lapsed Spenders?
 **Answer:**
 > *"For Low-Engagement / Lapsed Spenders (Cluster 0):
-> - **Automated Win-Back Workflows**: Triggered email campaigns with time-limited discounts (e.g., 'We miss you — 15% off your next order').
+> - **Automated Win-Back Workflows**: Triggered email campaigns with time-limited discounts (e.g., '10% off your next order').
 > - **Churn Surveys**: Micro-surveys to understand friction points in user experience or pricing.
-> - **Re-engagement Catalog**: Highlighting best-sellers and lower-priced gateway gift items to trigger habitual second purchases."*
-
-### Q25: If the marketing team requested 4 actionable tiers instead of 2, how does your system handle it?
-**Answer:**
-> *"Our codebase includes built-in support for granular 4-tier partitioning ($K=4$, Silhouette 0.3375):
-> 1. **High-Value Champions (16.5%)**: Median spend $3,733.87, 10 orders.
-> 2. **Promising Recent Buyers (19.3%)**: Median spend $471.70, recent purchase (17 days).
-> 3. **At-Risk Moderate Spenders (27.0%)**: Median spend $1,345.62, latency 56 days.
-> 4. **Hibernating Inactive Customers (37.2%)**: Median spend $298.26, latency 177 days.
-> Both the Streamlit app and data modules allow dynamic switching between $K=2$ (mathematical optimum) and $K=4$ (operational campaign tiering)."*
+> - **Re-engagement Catalog**: Highlighting best-sellers under £20 to trigger second purchases."*
 
 ---
 
 ## Category 6: Engineering Rigor & Code Architecture
 
-### Q26: How did you ensure reproducibility in your codebase?
+### Q24: How did you ensure reproducibility in your codebase?
 **Answer:**
 > *"We enforced reproducibility through:
 > 1. **Fixed Random Seeds**: `random_state=42` across K-Means, GMM, and PCA.
 > 2. **Deterministic Algorithm Parameters**: `n_init=10` for K-Means, `reg_covar=1e-6` for GMM.
 > 3. **Headless Generation Script**: `generate_final_results.py` exports identical CSVs, PNGs, and JSON metrics on any machine without human intervention.
-> 4. **Automated Data Retrieval**: `prep.py` downloads and caches the canonical UCI dataset with SHA/mirror verification."*
+> 4. **Automated Data Retrieval**: `prep.py` loads the canonical UCI dataset with automated path detection."*
 
-### Q27: How does your Streamlit application ensure high performance?
+### Q25: How does your Streamlit application ensure high performance?
 **Answer:**
-> *"We leveraged Streamlit's `@st.cache_data` decorators across the dataset loader, K-Means evaluation, GMM fitting, and Hierarchical clustering. Heavy computations (such as linkage matrices and 12-step hyperparameter scans) run once and remain cached in memory, ensuring instantaneous UI page transitions and slider updates."*
+> *"We leveraged Streamlit's `@st.cache_data` decorators across the dataset loader, K-Means evaluation, GMM fitting, and Hierarchical clustering. Heavy computations run once and remain cached in memory, ensuring responsive UI page transitions and slider updates."*
 
-### Q28: How can this system be integrated into an enterprise data warehouse?
+### Q26: What are the main limitations of the current segmentation model?
 **Answer:**
-> *"The output artifact `final_customer_segments.csv` is formatted as a standardized CRM table containing `CustomerID`, RFM metrics, `PC1`, `PC2`, `Cluster`, and `SegmentName`. It can be scheduled via an automated Airflow or cron workflow to write nightly segment updates directly into Snowflake, BigQuery, or Salesforce CRM."*
-
-### Q29: What are the main limitations of the current segmentation model?
-**Answer:**
-> *"Three key limitations:
+> *"Key limitations:
 > 1. **Feature Scope**: RFM captures behavioral transaction history but lacks demographic, psychographic, and web clickstream data.
-> 2. **Temporal Stationarity**: The dataset spans December 2010 to December 2011; seasonality (e.g. Christmas peak) affects recency. A production pipeline should implement rolling-window RFM.
-> 3. **Static Snapshots**: Customer segments shift over time as users migrate between active and lapsed states; hidden Markov models or dynamic clustering would capture transition probabilities."*
+> 2. **Temporal Stationarity**: The dataset spans December 2010 to December 2011; seasonality affects recency. A production pipeline could implement rolling-window RFM.
+> 3. **Static Snapshots**: Customer segments shift over time; dynamic clustering or hidden Markov models would capture transition probabilities."*
 
-### Q30: What future improvements would you implement?
+### Q27: What future improvements would you implement?
 **Answer:**
 > *"Future extensions:
-> 1. **Customer Lifetime Value (CLV) Prediction**: Integrating Gamma-Gamma and BG/NBD probabilistic models to forecast future purchasing frequency and monetary value.
-> 2. **Product-Level Embeddings**: Applying Word2Vec or BERT embeddings on transaction item descriptions (`StockCode` / `Description`) to segment by product affinity and category preferences.
-> 3. **Real-Time Streaming Ingestion**: Deploying the K-Means centroid model as a low-latency FastAPI microservice to assign segments to newly registered users in real time."*
+> 1. **Customer Lifetime Value (CLV) Prediction**: Integrating Gamma-Gamma and BG/NBD probabilistic models to forecast future purchasing frequency and monetary spend.
+> 2. **Product-Level Embeddings**: Applying NLP text embeddings on transaction item descriptions (`Description`) to segment by product category affinity.
+> 3. **Real-Time Streaming Ingestion**: Deploying the K-Means centroid model as a lightweight microservice to assign segments to new customers dynamically."*

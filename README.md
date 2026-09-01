@@ -34,13 +34,13 @@ Total Customer Cohort: 4,338 Unique Customers
 ├── 🌟 High-Value Active Customers (38.4% | n=1,666)
 │   ├── Median Recency: 16.0 days (Recent orders)
 │   ├── Median Frequency: 6.0 orders (Mean: 8.44 orders)
-│   ├── Median Spend: $2,061.08 (Mean: $4,539.60)
+│   ├── Median Spend: £2,061.08 (Mean: £4,539.60)
 │   └── Strategy: VIP loyalty tiers, early collection previews, dedicated account support.
 │
 └── 💤 Low-Engagement / Lapsed Spenders (61.6% | n=2,672)
     ├── Median Recency: 96.0 days (Dormant / Inactive)
     ├── Median Frequency: 1.0 order (Mean: 1.67 orders)
-    ├── Median Spend: $363.08 (Mean: $495.59)
+    ├── Median Spend: £363.08 (Mean: £495.59)
     └── Strategy: Automated win-back drip emails, time-limited discounts, churn surveys.
 ```
 

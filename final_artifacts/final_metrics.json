@@ -1,5 +1,5 @@
 {
-  "generated_timestamp": "2026-09-01 20:33:47",
+  "generated_timestamp": "2026-09-01 20:51:14",
   "dataset": {
     "dataset_name": "Online Retail Dataset",
     "dataset_source": "UCI Machine Learning Repository (Daqing Chen, 2015)",
@@ -208,7 +208,7 @@
       "Monetary_Median": 363.08,
       "AvgOrderValue_Mean": 320.2,
       "AvgOrderValue_Median": 239.4,
-      "Characteristics": "Long absence / inactive (median 96 days); infrequent orders (median 1 order); low monetary volume (median $363.07)",
+      "Characteristics": "Long absence / inactive (median 96 days); infrequent orders (median 1 order); low monetary volume (median \u00a3363.07)",
       "RecommendedAction": "Automated win-back email workflows, time-sensitive re-engagement discounts, surveys to identify customer churn drivers, and low-friction catalog recommendations."
     },
     {
@@ -224,7 +224,7 @@
       "Monetary_Median": 2061.08,
       "AvgOrderValue_Mean": 573.93,
       "AvgOrderValue_Median": 346.26,
-      "Characteristics": "Highly recent purchases (median 16 days); frequent orders (median 6 orders); above-average spend (median $2,061.08)",
+      "Characteristics": "Highly recent purchases (median 16 days); frequent orders (median 6 orders); above-average spend (median \u00a32,061.08)",
       "RecommendedAction": "VIP loyalty programs, early access to new product releases, dedicated account management, and premium bundle cross-selling to maximize lifetime value."
     }
   ]

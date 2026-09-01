@@ -11,6 +11,7 @@ This document contains the exact numerical results, empirical metrics, and stati
 | **Dataset Name** | Online Retail Dataset | Canonical giftware transaction dataset from UCI Machine Learning Repository |
 | **Citation / DOI** | Daqing Chen (2015) / `10.24432/C5BW33` | Transactions occurring from non-store online retail |
 | **Observation Period** | `2010-12-01` to `2011-12-09` | ~1.02 years of longitudinal transactional records |
+| **Currency** | Pound Sterling (£ / GBP) | Standard currency of transaction logs |
 | **Initial Raw Records** | **541,909** transactions | Full raw dataset shape: `(541909, 8)` |
 | **Missing CustomerID Rows** | **135,080** rows (24.93%) | Dropped; cannot attribute customer-level behavior without identifiers |
 | **Invalid Records Removed** | **8,945** rows | Cancellations (`Quantity <= 0`) and zero/negative unit prices (`UnitPrice <= 0`) |
@@ -26,13 +27,14 @@ This document contains the exact numerical results, empirical metrics, and stati
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Recency (Days)** | 92.54 | 51.00 | 100.01 | **+1.25** | `LogRecency` | **-0.38** | Moderate normal symmetry |
 | **Frequency (Invoices)** | 4.27 | 2.00 | 7.70 | **+12.07** | `LogFrequency` | **+1.21** | 90.0% reduction in skewness |
-| **Monetary Spend ($)** | $2,054.27 | $674.49 | $8,989.23 | **+19.34** | `LogMonetary` | **+0.40** | 97.9% reduction in skewness |
-| **Avg Order Value ($)** | $419.17 | $293.90 | $1,796.54 | **+41.69** | `LogAvgOrderValue` | **+0.24** | 99.4% reduction in skewness |
+| **Monetary Spend (£)** | £2,054.27 | £674.49 | £8,989.23 | **+19.34** | `LogMonetary` | **+0.40** | 97.9% reduction in skewness |
+| **Avg Order Value (£)** | £419.17 | £293.90 | £1,796.54 | **+41.69** | `LogAvgOrderValue` | **+0.24** | 99.4% reduction in skewness |
 
 ### Principal Component Analysis (PCA) on Standardized Log-RFM Space
-- **PC1 Explained Variance:** **75.08%** (Primarily captures overall volume, order frequency, and spend intensity)
-- **PC2 Explained Variance:** **18.79%** (Primarily captures recency and customer inactivity latency)
-- **Cumulative 2D Explained Variance:** **93.87%** (High-fidelity 2D representation preserving ~94% of multidimensional geometry)
+- **PC1 Explained Variance:** **75.08%**
+- **PC2 Explained Variance:** **18.79%**
+- **Cumulative 2D Explained Variance:** **93.87%**
+- *Note:* PCA was fitted strictly for 2D visualization without reducing the 3D feature space used during model training.
 
 ---
 
@@ -59,22 +61,22 @@ This document contains the exact numerical results, empirical metrics, and stati
 ### B. Gaussian Mixture Model (GMM) Evaluation Summary
 
 - **Best Candidate Configuration:** 2 components, `spherical` covariance
-- **Silhouette Score:** **0.4307**
-- **Davies-Bouldin Index:** **0.9023**
+- **Silhouette Score ($\uparrow$):** **0.4307**
+- **Davies-Bouldin Index ($\downarrow$):** **0.9023**
 - **Akaike Information Criterion (AIC):** **32,563.45**
 - **Bayesian Information Criterion (BIC):** **32,620.83**
 - **Mean Posterior Probability (Confidence):** **93.50%**
 - **Ambiguous Customers ($P_{\max} < 0.60$):** **178 customers** (4.10% of cohort)
+- *Note:* The 2-component spherical GMM was selected primarily for cluster separation under the common Silhouette-based comparison policy. AIC and BIC are reported as model-fit diagnostics.
 
 ---
 
 ### C. Hierarchical Agglomerative Clustering Summary
 
 - **Best Actionable Configuration:** 2 clusters, `ward` linkage, `euclidean` metric
-- **Silhouette Score:** **0.4040**
-- **Davies-Bouldin Index:** **0.9405**
-- **Cophenetic Correlation (Ward / Euclidean):** **0.6096**
-- **Cophenetic Correlation (Average / Cosine):** **0.7981** *(suffers from single-outlier chaining)*
+- **Silhouette Score ($\uparrow$):** **0.4040**
+- **Davies-Bouldin Index ($\downarrow$):** **0.9405**
+- **Cophenetic Correlation (Ward / Euclidean):** **0.6096** (moderate diagnostic value confirming tree distance preservation)
 
 ---
 
@@ -92,18 +94,5 @@ This document contains the exact numerical results, empirical metrics, and stati
 
 | Cluster ID | Segment Name | Customer Count | Share (%) | Recency Median (Mean) | Frequency Median (Mean) | Monetary Median (Mean) | Avg Order Value Median (Mean) | Core Behavioral Trait |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **Cluster 0** | **Low-Engagement / Lapsed Spenders** | **2,672** | **61.60%** | **96.0 days** (134.09) | **1.0 order** (1.67) | **$363.08** ($495.59) | **$239.40** ($320.20) | Infrequent, long absence, low cumulative lifetime spend |
-| **Cluster 1** | **High-Value Active Customers** | **1,666** | **38.40%** | **16.0 days** (25.89) | **6.0 orders** (8.44) | **$2,061.08** ($4,539.60) | **$346.26** ($573.93) | Highly recent, recurring purchases, high monetary value |
-
----
-
-## 6. Granular 4-Tier Business Segmentation Reference
-
-For applications requiring operational multi-tier marketing segmentation:
-
-| Cluster | Segment Name | Customers | Recency (Med) | Frequency (Med) | Monetary (Med) | Strategic Focus |
-| :---: | :--- | :---: | :---: | :---: | :---: | :--- |
-| **0** | Promising Recent Buyers | 837 (19.3%) | 17.0 days | 1.0 order | $471.70 | Onboarding nurturing, second-purchase incentives |
-| **1** | High-Value Loyal Champions | 716 (16.5%) | 8.0 days | 10.0 orders | $3,733.87 | VIP rewards, early product previews, account manager |
-| **2** | At-Risk Moderate Spenders | 1,173 (27.0%) | 56.0 days | 3.0 orders | $1,345.62 | Win-back campaigns, time-limited discount offers |
-| **3** | Hibernating Inactive Customers | 1,612 (37.2%) | 177.0 days | 1.0 order | $298.26 | Automated low-cost reactivation, product surveys |
+| **Cluster 0** | **Low-Engagement / Lapsed Spenders** | **2,672** | **61.60%** | **96.0 days** (134.09) | **1.0 order** (1.67) | **£363.08** (£495.59) | **£239.40** (£320.20) | Infrequent, long absence, low cumulative spend |
+| **Cluster 1** | **High-Value Active Customers** | **1,666** | **38.40%** | **16.0 days** (25.89) | **6.0 orders** (8.44) | **£2,061.08** (£4,539.60) | **£346.26** (£573.93) | Highly recent, recurring purchases, high monetary value |
