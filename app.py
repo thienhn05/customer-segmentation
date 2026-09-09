@@ -683,18 +683,6 @@ def main():
         $$AIC = 2p - 2\ln L, \quad BIC = p\ln N - 2\ln L$$
         """)
 
-        st.divider()
-
-        st.subheader("🎓 Student Project & Course Details")
-        st.markdown("""
-        - **Module:** Artificial Intelligence / Machine Learning
-        - **Project Title:** Customer Segmentation Using Unsupervised Machine Learning
-        - **Student Name:** [STUDENT NAME]
-        - **Student ID:** [STUDENT ID]
-        - **Tutorial Group / Class:** [TUTORIAL GROUP]
-        - **Dataset Reference:** Daqing Chen (2015), *Online Retail Dataset*, UCI Machine Learning Repository, DOI: 10.24432/C5BW33.
-        """)
-
 
 if __name__ == '__main__':
     main()
